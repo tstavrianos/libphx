@@ -1,3 +1,14 @@
+# Changes from original
+- Removed all pre-compiled dependencies, other than FMOD.
+Using VCPKG for the dependencies allows us to link to the debug versions of the libraries when performing debug builds versus always using the release libraries. 
+- Added https://github.com/sonoro1234/luafilesystem because luajit was complaining about lfs missing.
+- the Bullet library profile now is disabled if the bullet library hasn't been compiled to include (VCPKG has it disabled by default).
+
+# TODO
+- Bullet3 can be compiled with a flag to use doubles instead of floats everywhere. PHX does not support that yet and requires the 32bit float version.
+- Figure out how to use conan as an alternative for anyone that doesn't like vcpkg.
+
+# Original README below
 # LibPHX
 
 LibPHX is a lightweight, (mostly) C-based game engine developed for the cancelled space simulation game Limit Theory. LibPHX focuses on implementing the core features necessary to build performant 3D games without including the kitchen sink.

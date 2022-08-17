@@ -1,6 +1,25 @@
-cmake_minimum_required (VERSION 3.0.2)
-project (LibPHX)
-set (CMAKE_BUILD_TYPE Release)
+cmake_minimum_required (VERSION 3.16)
+
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "")
+endif()
+
+if(DEFINED ENV{VCPKG_DEFAULT_TRIPLET} AND NOT DEFINED VCPKG_TARGET_TRIPLET)
+  set(VCPKG_TARGET_TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}" CACHE STRING "")
+endif()
+
+project (phx)
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+find_package(freetype CONFIG REQUIRED)
+find_package(SDL2 CONFIG REQUIRED)
+find_package(Bullet CONFIG REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(lz4 CONFIG REQUIRED)
+find_package(LuaJIT REQUIRED)
+
 include (script/build/Shared.cmake)
 
 # ------------------------------------------------------------------------------
@@ -15,7 +34,6 @@ phx_configure_target_properties (phx)
 target_compile_definitions (phx PRIVATE LIBPHX_BUILDING=1)
 target_include_directories (phx PUBLIC "include")
 target_include_directories (phx PUBLIC "ext/include")
-target_include_directories (phx PUBLIC "ext/include/bullet")
 target_link_directories (phx PUBLIC "ext/lib/${PLATARCH}")
 
 set_target_properties (phx PROPERTIES
@@ -39,17 +57,12 @@ if (WINDOWS)
   # link target to an external library; also add a post-build step to
   # copy the library DLL into the bin folder
   function (target_link_extlib target lib)
-    target_link_libraries (${target} ${lib})
+    target_link_libraries (${target} PRIVATE ${lib})
     add_custom_command (TARGET ${target} POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
       $<TARGET_FILE:${lib}> $<TARGET_FILE_DIR:${target}>
     )
   endfunction ()
-
-  add_extlib (glew glew32.lib glew32.dll)
-  add_extlib (lz4 liblz4.lib liblz4.dll)
-  add_extlib (lua51 lua51.lib lua51.dll)
-  add_extlib (sdl2 SDL2.lib SDL2.dll)
 
   if (ARCH EQUAL "32")
     add_extlib (fmod fmodL_vc.lib fmodL.dll)
@@ -69,33 +82,38 @@ endif ()
 
 if (WINDOWS)
 
-  target_link_libraries (phx
+  target_link_libraries (phx PRIVATE
     opengl32.lib
     user32.lib winmm.lib Ws2_32.lib
-    freetype.lib
-    BulletCollision.lib BulletDynamics.lib LinearMath.lib)
+	)
 
-  target_link_extlib (phx glew)
-  target_link_extlib (phx sdl2)
-  target_link_extlib (phx lz4)
-  target_link_extlib (phx lua51)
   target_link_extlib (phx fmod)
   target_link_extlib (phx fmodstudio)
 
 elseif (LINUX)
 
-  target_link_libraries (phx
+  target_link_libraries (phx PRIVATE
     GL
-    GLEW
     dl
-    SDL2
-    freetype
-    luajit-5.1
-    lz4
     fmod fmodstudio
-    BulletCollision BulletDynamics)
+	)
 
   # Add ext/lib/{$PLATARCH} to runtime library search path
   target_link_options (phx PRIVATE "-Wl,-rpath,../ext/lib/${PLATARCH}")
 
 endif ()
+
+target_link_directories(phx PRIVATE ${BULLET_LIBRARY_DIRS})
+
+target_link_libraries(phx PRIVATE
+	freetype
+	SDL2::SDL2 SDL2::SDL2main
+    GLEW::GLEW
+	lz4::lz4
+	${LUAJIT_LIBRARIES}
+    BulletSoftBody BulletDynamics BulletCollision Bullet3Common LinearMath
+	)
+
+target_include_directories (phx PUBLIC
+        ${LUAJIT_INCLUDE_DIRS})
+

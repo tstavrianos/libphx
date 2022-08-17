@@ -39,8 +39,11 @@ function (phx_configure_target_properties target)
     target_compile_definitions (${target} PRIVATE WIN32_LEAN_AND_MEAN)
     target_compile_definitions (${target} PRIVATE WINDOWS=1)
 
-    target_compile_options (${target} PRIVATE "/MP")         # Multithreaded Build
-    target_compile_options (${target} PRIVATE "/MD")         # Dynamic C Runtime
+    target_compile_options (${target} PRIVATE /MP)         # Multithreaded Build
+    target_compile_options (${target} PRIVATE # Dynamic C Runtime
+            $<$<CONFIG:Debug>:/MDd>
+            $<$<CONFIG:Release>:/MD>
+            )
     target_compile_options (${target} PRIVATE "/EHs-c-")     # No exception handling
     target_compile_options (${target} PRIVATE "/fp:fast")    # No strict FP
     target_compile_options (${target} PRIVATE "/GL")         # Whole Program Optimization

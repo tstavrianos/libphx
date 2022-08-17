@@ -401,7 +401,7 @@ do -- Transparent Structs
 end
 
 do -- Load Library
-  local debug = __debug__ and 'd' or ''
+  local debug = __debug__ and 'd' or 'r'
   local arch = jit.arch == 'x86' and '32' or '64'
   local path = string.format('libphx%s%s', arch, debug)
   libphx.lib = ffi.load(path, false)
